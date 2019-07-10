@@ -19,6 +19,7 @@ cdef class CrossSectionValueHolder(SecurityValueHolder):
 
     def __init__(self, innerValue, groups=None):
         super(CrossSectionValueHolder, self).__init__()
+        print('CrossSectionValueHolder')
         self._inner = build_holder(innerValue)
         self._group = build_holder(groups) if groups else None
         if self._group:
@@ -46,6 +47,7 @@ cdef class CSTopNSecurityValueHolder(CrossSectionValueHolder):
     cdef int _n;
 
     def __init__(self, innerValue, n, groups=None):
+        print('CSTopNSecurityValueHolder')
         super(CSTopNSecurityValueHolder, self).__init__(innerValue, groups)
         self._n = n
 

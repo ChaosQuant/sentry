@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-u"""
-Created on 2015-8-8
-
-@author: cheng.li
-"""
 
 from Math.Accumulators.IAccumulators import Exp
 from Math.Accumulators.IAccumulators import Log

@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-u"""
-Created on 2017-2-8
 
-@author: cheng.li
-"""
 
 import copy
 import bisect

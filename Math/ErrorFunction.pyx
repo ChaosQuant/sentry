@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-u"""
-Created on 2017-1-3
-
-@author: cheng.li
-"""
 
 cimport cython
 from libc.math cimport exp
