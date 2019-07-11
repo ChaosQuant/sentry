@@ -720,6 +720,7 @@ cdef class SecurityAddedValueHolder(SecurityCombinedValueHolder):
 
 cdef class SecuritySubbedValueHolder(SecurityCombinedValueHolder):
     def __init__(self, left, right):
+        print('SecuritySubbedValueHolder')
         super(SecuritySubbedValueHolder, self).__init__(
             left, right, operator.sub)
 

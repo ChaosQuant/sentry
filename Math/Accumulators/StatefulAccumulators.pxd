@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-u"""
-Created on 2017-2-10
-
-@author: cheng.li
-"""
 
 cimport numpy as np
 from Math.Accumulators.impl cimport Deque

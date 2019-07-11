@@ -4,13 +4,13 @@
 from Analysis import transform
 from Analysis.SeriesValues import SeriesValues
 
-from PyFin.api.Analysis import IIF
-from PyFin.api.Analysis import CURRENT
-from PyFin.api.Analysis import LAST
-from PyFin.api.Analysis import HIGH
-from PyFin.api.Analysis import LOW
-from PyFin.api.Analysis import OPEN
-from PyFin.api.Analysis import CLOSE
+from api.Analysis import IIF
+from api.Analysis import CURRENT
+from api.Analysis import LAST
+from api.Analysis import HIGH
+from api.Analysis import LOW
+from api.Analysis import OPEN
+from api.Analysis import CLOSE
 
 from api.Analysis import CSRank
 from api.Analysis import CSTopN
