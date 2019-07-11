@@ -184,6 +184,7 @@ cdef class AddedValueHolder(CombinedValueHolder):
 
 cdef class MinusedValueHolder(CombinedValueHolder):
     def __init__(self, left, right):
+        print('MinusedValueHolder')
         super(MinusedValueHolder, self).__init__(left, right)
 
     cpdef double result(self):
