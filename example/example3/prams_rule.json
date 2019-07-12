@@ -1,0 +1,49 @@
+[{
+	"name": "alpha2",
+	"params": [{
+		"key": "param1",
+		"type": "array",
+		"array": [-1, 1, 2, -2]
+	}]
+}, {
+	"name": "alpha26",
+	"params": [{
+		"key": "param1",
+		"type": "array",
+		"array": [3, 6, -3, -6]
+	}]
+}, {
+	"name": "alpha154",
+	"params": [{
+		"key": "param1",
+		"type": "array",
+		"array": [3, 6, -3, -6]
+	}]
+}, {
+	"name": "alpha250",
+	"params": [{
+		"key": "param1",
+		"type": "scope",
+		"start": 1,
+		"end": 2,
+		"section": 0.5
+	}, {
+		"key": "param2",
+		"type": "scope",
+		"start": 1,
+		"end": 2,
+		"section": 0.5
+	}, {
+		"key": "param3",
+		"type": "scope",
+		"start": 1,
+		"end": 2,
+		"section": 0.5
+	}, {
+		"key": "param4",
+		"type": "scope",
+		"start": 1,
+		"end": 1,
+		"section": 0.5
+	}]
+}]
