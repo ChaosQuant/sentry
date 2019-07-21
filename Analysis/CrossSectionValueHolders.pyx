@@ -19,7 +19,6 @@ cdef class CrossSectionValueHolder(SecurityValueHolder):
 
     def __init__(self, innerValue, groups=None):
         super(CrossSectionValueHolder, self).__init__()
-        print('CrossSectionValueHolder')
         self._inner = build_holder(innerValue)
         self._group = build_holder(groups) if groups else None
         if self._group:
@@ -52,16 +51,15 @@ cdef class CSTopNSecurityValueHolder(CrossSectionValueHolder):
         self._n = n
 
     cdef _cal_impl(self):
-        cdef SeriesValues raw_values = self._inner.value
+        cdef SeriesValues raw_values = self._inner.value_all()
 
         if self._group:
-            self.cached = raw_values.top_n(self._n, self._group.value)
+            self.cached = raw_values.top_n(self._n, self._group.value_all())
         else:
             self.cached = raw_values.top_n(self._n)
         self.updated = 1
 
-    @property
-    def value(self):
+    cpdef value_all(self):
         if self.updated:
             return self.cached
         else:
@@ -99,16 +97,15 @@ cdef class CSTopNPercentileSecurityValueHolder(CrossSectionValueHolder):
         self._n = n
 
     cdef _cal_impl(self):
-        cdef SeriesValues raw_values = self._inner.value
+        cdef SeriesValues raw_values = self._inner.value_all()
 
         if self._group:
-            self.cached = raw_values.top_n_percentile(self._n, self._group.value)
+            self.cached = raw_values.top_n_percentile(self._n, self._group.value_all())
         else:
             self.cached = raw_values.top_n_percentile(self._n)
         self.updated = 1
 
-    @property
-    def value(self):
+    cpdef value_all(self):
         if self.updated:
             return self.cached
         else:
@@ -146,16 +143,15 @@ cdef class CSBottomNSecurityValueHolder(CrossSectionValueHolder):
         self._n = n
 
     cdef _cal_impl(self):
-        cdef SeriesValues raw_values = self._inner.value
+        cdef SeriesValues raw_values = self._inner.value_all()
 
         if self._group:
-            self.cached = raw_values.bottom_n(self._n, self._group.value)
+            self.cached = raw_values.bottom_n(self._n, self._group.value_all())
         else:
             self.cached = raw_values.bottom_n(self._n)
         self.updated = 1
 
-    @property
-    def value(self):
+    cpdef value_all(self):
         if self.updated:
             return self.cached
         else:
@@ -193,16 +189,15 @@ cdef class CSBottomNPercentileSecurityValueHolder(CrossSectionValueHolder):
         self._n = n
 
     cdef _cal_impl(self):
-        cdef SeriesValues raw_values = self._inner.value
+        cdef SeriesValues raw_values = self._inner.value_all()
 
         if self._group:
-            self.cached = raw_values.bottom_n_percentile(self._n, self._group.value)
+            self.cached = raw_values.bottom_n_percentile(self._n, self._group.value_all())
         else:
             self.cached = raw_values.bottom_n_percentile(self._n)
         self.updated = 1
 
-    @property
-    def value(self):
+    cpdef value_all(self):
         if self.updated:
             return self.cached
         else:
@@ -237,16 +232,15 @@ cdef class CSRankedSecurityValueHolder(CrossSectionValueHolder):
         super(CSRankedSecurityValueHolder, self).__init__(innerValue, groups)
 
     cdef _cal_impl(self):
-        cdef SeriesValues raw_values = self._inner.value
+        cdef SeriesValues raw_values = self._inner.value_all()
 
         if self._group:
-            self.cached = raw_values.rank(self._group.value)
+            self.cached = raw_values.rank(self._group.value_all())
         else:
             self.cached = raw_values.rank()
         self.updated = 1
 
-    @property
-    def value(self):
+    cpdef value_all(self):
         if self.updated:
             return self.cached
         else:
@@ -280,16 +274,15 @@ cdef class CSAverageSecurityValueHolder(CrossSectionValueHolder):
         super(CSAverageSecurityValueHolder, self).__init__(innerValue, groups)
 
     cdef _cal_impl(self):
-        cdef SeriesValues raw_values = self._inner.value
+        cdef SeriesValues raw_values = self._inner.value_all()
 
         if self._group:
-            self.cached = raw_values.mean(self._group.value)
+            self.cached = raw_values.mean(self._group.value_all())
         else:
             self.cached = raw_values.mean()
         self.updated = 1
 
-    @property
-    def value(self):
+    cpdef value_all(self):
         if self.updated:
             return self.cached
         else:
@@ -324,16 +317,15 @@ cdef class CSPercentileSecurityValueHolder(CrossSectionValueHolder):
         super(CSPercentileSecurityValueHolder, self).__init__(innerValue, groups)
 
     cdef _cal_impl(self):
-        cdef SeriesValues raw_values = self._inner.value
+        cdef SeriesValues raw_values = self._inner.value_all()
 
         if self._group:
-            self.cached = raw_values.percentile(self._group.value)
+            self.cached = raw_values.percentile(self._group.value_all())
         else:
             self.cached = raw_values.percentile()
         self.updated = 1
 
-    @property
-    def value(self):
+    cpdef value_all(self):
         if self.updated:
             return self.cached
         else:
@@ -366,17 +358,16 @@ cdef class CSAverageAdjustedSecurityValueHolder(CrossSectionValueHolder):
     def __init__(self, innerValue, groups=None):
         super(CSAverageAdjustedSecurityValueHolder, self).__init__(innerValue, groups)
 
-    @property
-    def value(self):
+    cpdef value_all(self):
 
         cdef SeriesValues raw_values
 
         if self.updated:
             return self.cached
         else:
-            raw_values = self._inner.value
+            raw_values = self._inner.value_all()
             if self._group:
-                self.cached = raw_values - raw_values.mean(self._group.value)
+                self.cached = raw_values - raw_values.mean(self._group.value_all())
             else:
                 self.cached = raw_values - raw_values.mean()
             self.updated = 1
@@ -389,9 +380,9 @@ cdef class CSAverageAdjustedSecurityValueHolder(CrossSectionValueHolder):
         if self.updated:
             return self.cached[name]
         else:
-            raw_values = self._inner.value
+            raw_values = self._inner.value_all()
             if self._group:
-                self.cached = raw_values - raw_values.mean(self._group.value)
+                self.cached = raw_values - raw_values.mean(self._group.value_all())
             else:
                 self.cached = raw_values - raw_values.mean()
             self.updated = 1
@@ -417,16 +408,15 @@ cdef class CSZScoreSecurityValueHolder(CrossSectionValueHolder):
         super(CSZScoreSecurityValueHolder, self).__init__(innerValue, groups)
 
     cdef _cal_impl(self):
-        cdef SeriesValues raw_values = self._inner.value
+        cdef SeriesValues raw_values = self._inner.value_all()
 
         if self._group:
-            self.cached = raw_values.zscore(self._group.value)
+            self.cached = raw_values.zscore(self._group.value_all())
         else:
             self.cached = raw_values.zscore()
         self.updated = 1
 
-    @property
-    def value(self):
+    cpdef value_all(self):
         if self.updated:
             return self.cached
         else:
@@ -455,6 +445,48 @@ cdef class CSZScoreSecurityValueHolder(CrossSectionValueHolder):
             return "\mathrm{{CSZscore}}({0})".format(str(self._inner))
 
 
+cdef class CSFillNASecurityValueHolder(CrossSectionValueHolder):
+    def __init__(self, innerValue, groups=None):
+        super(CSFillNASecurityValueHolder, self).__init__(innerValue, groups)
+
+    cdef _cal_impl(self):
+        cdef SeriesValues raw_values = self._inner.value_all()
+
+        if self._group:
+            self.cached = raw_values.fillna(self._group.value_all())
+        else:
+            self.cached = raw_values.fillna()
+        self.updated = 1
+
+    cpdef value_all(self):
+        if self.updated:
+            return self.cached
+        else:
+            self._cal_impl()
+            return self.cached
+
+    cpdef double value_by_name(self, name):
+        if self.updated:
+            return self.cached[name]
+        else:
+            self._cal_impl()
+            return self.cached[name]
+
+    cpdef SeriesValues value_by_names(self, list names):
+        cdef SeriesValues raw_values = self._inner.value_by_names(names)
+        if self._group:
+            raw_values = raw_values.fillna(self._group.value_by_names(names))
+        else:
+            raw_values = raw_values.fillna()
+        return raw_values
+
+    def __str__(self):
+        if self._group:
+            return "\mathrm{{CSFillNA}}({0}, groups={1})".format(str(self._inner), str(self._group))
+        else:
+            return "\mathrm{{CSFillNA}}({0})".format(str(self._inner))
+
+
 cdef class CSResidueSecurityValueHolder(SecurityValueHolder):
 
     cdef public SecurityValueHolder _left
@@ -479,8 +511,7 @@ cdef class CSResidueSecurityValueHolder(SecurityValueHolder):
         self._right.push(data)
         self.updated = 0
 
-    @property
-    def value(self):
+    cpdef value_all(self):
 
         cdef SeriesValues left_raw_values
         cdef SeriesValues right_raw_values
@@ -488,8 +519,8 @@ cdef class CSResidueSecurityValueHolder(SecurityValueHolder):
         if self.updated:
             return self.cached
         else:
-            left_raw_values = self._left.value
-            right_raw_values = self._right.value
+            left_raw_values = self._left.value_all()
+            right_raw_values = self._right.value_all()
             self.cached = left_raw_values.res(right_raw_values)
             self.updated = 1
             return self.cached
@@ -502,8 +533,8 @@ cdef class CSResidueSecurityValueHolder(SecurityValueHolder):
         if self.updated:
             return self.cached[name]
         else:
-            left_raw_values = self._left.value
-            right_raw_values = self._right.value
+            left_raw_values = self._left.value_all()
+            right_raw_values = self._right.value_all()
             self.cached = left_raw_values.res(right_raw_values)
             self.updated = 1
             return self.cached[name]

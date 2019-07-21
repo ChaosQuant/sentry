@@ -7,19 +7,36 @@ from Analysis.SeriesValues cimport SeriesValues
 cdef class SecurityValueHolder(object):
 
     cdef public list _dependency
-    cdef public SecurityValueHolder _compHolder
     cdef public int _window
     cdef public Accumulator _holderTemplate
     cdef public int updated
     cdef public dict _innerHolders
     cdef public SeriesValues cached
 
-    cpdef push(self, dict data)
     cpdef value_all(self)
     cpdef SeriesValues value_by_names(self, list names)
     cpdef double value_by_name(self, name)
     cpdef shift(self, int n)
     cpdef transform(self, data, str name=*, str category_field=*, bint dropna=*)
+
+
+cdef class SecuritySingleValueHolder(SecurityValueHolder):
+
+    cdef public SecurityValueHolder _compHolder
+    cpdef push(self, dict data)
+
+
+cdef class SecurityBinaryValueHolder(SecurityValueHolder):
+    cdef public SecurityValueHolder _compHolder1
+    cdef public SecurityValueHolder _compHolder2
+    cpdef push(self, dict data)
+
+
+cdef class SecurityStatelessSingleValueHolder(SecurityValueHolder):
+
+    cdef public SecurityValueHolder _compHolder
+
+    cpdef push(self, dict data)
 
 
 cdef class FilteredSecurityValueHolder(SecurityValueHolder):
@@ -156,7 +173,10 @@ cdef class SecurityOrOperatorValueHolder(SecurityCombinedValueHolder):
     pass
 
 
-cdef class SecurityShiftedValueHolder(SecurityValueHolder):
+cdef class SecurityShiftedValueHolder(SecuritySingleValueHolder):
+    pass
+
+cdef class SecurityDeltaValueHolder(SecuritySingleValueHolder):
     pass
 
 
