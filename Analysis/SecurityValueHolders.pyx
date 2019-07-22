@@ -33,7 +33,6 @@ cdef class SecurityValueHolder(object):
         self.updated = 0
         self.cached = None
         self._innerHolders = {}
-        self._compHolder = None
 
     @property
     def symbolList(self):
@@ -46,36 +45,6 @@ cdef class SecurityValueHolder(object):
     @property
     def window(self):
         return self._window
-
-    cpdef push(self, dict data):
-
-        cdef SeriesValues sec_values
-        cdef Accumulator holder
-        cdef str dummy_name
-        self.updated = 0
-
-        if self._compHolder:
-            dummy_name = str(self._compHolder)
-            self._compHolder.push(data)
-            sec_values = self._compHolder.value_all()
-
-            for name in sec_values.index():
-                try:
-                    holder = self._innerHolders[name]
-                    holder.push({dummy_name: sec_values[name]})
-                except KeyError:
-                    holder = copy.deepcopy(self._holderTemplate)
-                    holder.push({dummy_name:  sec_values[name]})
-                    self._innerHolders[name] = holder
-        else:
-            for name in data:
-                try:
-                    holder = self._innerHolders[name]
-                    holder.push(data[name])
-                except KeyError:
-                    holder = copy.deepcopy(self._holderTemplate)
-                    holder.push(data[name])
-                    self._innerHolders[name] = holder
 
     @property
     def value(self):
@@ -120,8 +89,11 @@ cdef class SecurityValueHolder(object):
             n = len(names)
             res = np.zeros(n)
             for i, name in enumerate(names):
-                holder = self._innerHolders[name]
-                res[i] = holder.result()
+                try:
+                    holder = self._innerHolders[name]
+                    res[i] = holder.result()
+                except ArithmeticError:
+                    res[i] = NAN
             return SeriesValues(res, index=names)
 
     cpdef double value_by_name(self, name):
@@ -129,8 +101,11 @@ cdef class SecurityValueHolder(object):
         if self.updated:
             return self.cached[name]
         else:
-            holder = self._innerHolders[name]
-            return holder.result()
+            try:
+                holder = self._innerHolders[name]
+                return holder.result()
+            except ArithmeticError:
+                return NAN
 
     @property
     def holders(self):
@@ -150,7 +125,7 @@ cdef class SecurityValueHolder(object):
         if isinstance(filter, SecurityValueHolder):
             return FilteredSecurityValueHolder(self, filter)
         elif isinstance(filter, int):
-            return SecurityShiftedValueHolder(self, filter)
+            return SecurityShiftedValueHolder(filter, self)
         else:
             return self.value_all()[filter]
 
@@ -209,7 +184,7 @@ cdef class SecurityValueHolder(object):
         return SecurityXorValuedHolder(left, self)
 
     cpdef shift(self, int n):
-        return SecurityShiftedValueHolder(self, n)
+        return SecurityShiftedValueHolder(n, self)
 
     cpdef transform(self, data, str name=None, str category_field=None, bint dropna=True):
 
@@ -272,6 +247,115 @@ cdef class SecurityValueHolder(object):
             df.dropna(inplace=True)
 
         return df
+
+
+cdef class SecuritySingleValueHolder(SecurityValueHolder):
+    def __init__(self, window, holderType, x):
+        super(SecuritySingleValueHolder, self).__init__()
+        self._compHolder = build_holder(x)
+        self._dependency = self._compHolder.fields
+        self._window = window + self._compHolder.window
+        self._holderTemplate = holderType(window=window, x=str(self._compHolder))
+        self._innerHolders = {
+            name: copy.deepcopy(self._holderTemplate) for name in self._compHolder.symbolList
+            }
+
+    cpdef push(self, dict data):
+
+        cdef SeriesValues sec_values
+        cdef Accumulator holder
+        cdef str dummy_name
+        self.updated = 0
+
+        dummy_name = str(self._compHolder)
+        self._compHolder.push(data)
+        sec_values = self._compHolder.value_all()
+
+        for name in sec_values.index():
+            try:
+                holder = self._innerHolders[name]
+                holder.push({dummy_name: sec_values[name]})
+            except KeyError:
+                holder = copy.deepcopy(self._holderTemplate)
+                holder.push({dummy_name:  sec_values[name]})
+                self._innerHolders[name] = holder
+
+    def __str__(self):
+        return str(self._holderTemplate)
+
+
+cdef class SecurityBinaryValueHolder(SecurityValueHolder):
+    def __init__(self, window, holderType, x, y):
+        super(SecurityBinaryValueHolder, self).__init__()
+        self._compHolder1 = build_holder(x)
+        self._compHolder2 = build_holder(y)
+        self._dependency = list(set(self._compHolder1.fields + self._compHolder2.fields))
+        self._window = window + max(self._compHolder1.window, self._compHolder2.window)
+        self._holderTemplate = holderType(window=window, x=str(self._compHolder1), y=str(self._compHolder2))
+        self._innerHolders = {
+            name: copy.deepcopy(self._holderTemplate) for name in self._compHolder1.symbolList
+            }
+
+    cpdef push(self, dict data):
+
+        cdef SeriesValues sec_values1
+        cdef SeriesValues sec_values2
+        cdef Accumulator holder
+        cdef str dummy_name1
+        cdef str dummy_name2
+        self.updated = 0
+
+        dummy_name1 = str(self._compHolder1)
+        dummy_name2 = str(self._compHolder2)
+        self._compHolder1.push(data)
+        self._compHolder2.push(data)
+        sec_values1 = self._compHolder1.value_all()
+        sec_values2 = self._compHolder2.value_all()
+
+        for name in sec_values1.index():
+            try:
+                holder = self._innerHolders[name]
+                holder.push({dummy_name1: sec_values1[name], dummy_name2: sec_values2[name]})
+            except KeyError:
+                holder = copy.deepcopy(self._holderTemplate)
+                holder.push({dummy_name1: sec_values1[name], dummy_name2: sec_values2[name]})
+                self._innerHolders[name] = holder
+
+    def __str__(self):
+        return str(self._holderTemplate)
+
+
+cdef class SecurityStatelessSingleValueHolder(SecurityValueHolder):
+
+    def __init__(self, holderType, x, **kwargs):
+        super(SecurityStatelessSingleValueHolder, self).__init__()
+        self._compHolder = build_holder(x)
+        self._holderTemplate = holderType(x=str(self._compHolder), **kwargs)
+        self._innerHolders = {name: copy.deepcopy(self._holderTemplate) for name in self._compHolder.symbolList}
+        self._dependency = self._compHolder.fields
+
+    cpdef push(self, dict data):
+
+        cdef SeriesValues sec_values
+        cdef Accumulator holder
+        cdef str dummy_name
+        self.updated = 0
+
+        dummy_name = str(self._compHolder)
+        self._compHolder.push(data)
+        sec_values = self._compHolder.value_all()
+
+        for name in sec_values.index():
+            try:
+                holder = self._innerHolders[name]
+                holder.push({dummy_name: sec_values[name]})
+            except KeyError:
+                holder = copy.deepcopy(self._holderTemplate)
+                holder.push({dummy_name:  sec_values[name]})
+                self._innerHolders[name] = holder
+
+    def __str__(self):
+        return str(self._holderTemplate)
 
 
 cdef class FilteredSecurityValueHolder(SecurityValueHolder):
@@ -640,6 +724,8 @@ cpdef SecurityValueHolder build_holder(name):
         return SecurityCurrentValueHolder(name)
     elif isanumber(name):
         return IdentitySecurityValueHolder(float(name))
+    elif isinstance(name, (list, tuple)) and len(name) == 1:
+        return SecurityCurrentValueHolder(name[0])
     else:
         raise ValueError("{0} is not recognized as valid holder or name".format(name))
 
@@ -720,7 +806,6 @@ cdef class SecurityAddedValueHolder(SecurityCombinedValueHolder):
 
 cdef class SecuritySubbedValueHolder(SecurityCombinedValueHolder):
     def __init__(self, left, right):
-        print('SecuritySubbedValueHolder')
         super(SecuritySubbedValueHolder, self).__init__(
             left, right, operator.sub)
 
@@ -829,40 +914,19 @@ cdef class SecurityOrOperatorValueHolder(SecurityCombinedValueHolder):
         return "{0} | {1}".format(str(self._left), str(self._right))
 
 
-cdef class SecurityShiftedValueHolder(SecurityValueHolder):
+cdef class SecurityShiftedValueHolder(SecuritySingleValueHolder):
 
-    def __init__(self, right, n):
-        super(SecurityShiftedValueHolder, self).__init__()
-
-        self._compHolder = build_holder(right)
-        self._window = self._compHolder.window + n
-        self._dependency = copy.deepcopy(self._compHolder.fields)
-        self._holderTemplate = Shift(Current(str(self._compHolder)), n)
-
-        self._innerHolders = {
-            name: copy.deepcopy(self._holderTemplate) for name in self._compHolder.symbolList
-        }
+    def __init__(self, window, x):
+        super(SecurityShiftedValueHolder, self).__init__(window, Shift, x)
 
     def __str__(self):
         return "\\mathrm{{Shift}}({0}, {1})".format(str(self._compHolder), self._holderTemplate.lag())
 
 
-cdef class SecurityDeltaValueHolder(SecurityValueHolder):
+cdef class SecurityDeltaValueHolder(SecuritySingleValueHolder):
 
-    def __init__(self, right, n):
-        super(SecurityDeltaValueHolder, self).__init__()
-
-        self._compHolder = build_holder(right)
-        self._window = self._compHolder.window + n
-        self._dependency = copy.deepcopy(self._compHolder.fields)
-        self._holderTemplate = Delta(Current(str(self._compHolder)), n)
-
-        self._innerHolders = {
-            name: copy.deepcopy(self._holderTemplate) for name in self._compHolder.symbolList
-        }
-
-    def __str__(self):
-        return "\\mathrm{{Delta}}({0}, {1})".format(str(self._compHolder), self._holderTemplate.lag())
+    def __init__(self, window, x):
+        super(SecurityDeltaValueHolder, self).__init__(window, Delta, x)
 
 
 cdef class SecurityIIFValueHolder(SecurityValueHolder):

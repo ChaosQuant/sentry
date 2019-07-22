@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import copy
-from Analysis.SecurityValueHolders cimport SecurityValueHolder
+from Analysis.SecurityValueHolders cimport SecurityStatelessSingleValueHolder
 from Analysis.SecurityValueHolders cimport SecurityCombinedValueHolder
 from Analysis.SecurityValueHolders cimport build_holder
 from Math.Accumulators.IAccumulators cimport Sign
 from Math.Accumulators.StatelessAccumulators cimport XAverage
+from Math.Accumulators.StatelessAccumulators cimport Average
 from Math.Accumulators.StatefulAccumulators cimport MACD
 from Math.Accumulators.IAccumulators cimport Exp
 from Math.Accumulators.IAccumulators cimport Log
@@ -27,16 +28,10 @@ from Analysis.SeriesValues import s_maximum
 from Analysis.SeriesValues import s_minimum
 
 
-cdef class SecurityStatelessSingleValueHolder(SecurityValueHolder):
-    def __init__(self, holderType, x, **kwargs):
-        super(SecurityStatelessSingleValueHolder, self).__init__()
-        self._compHolder = build_holder(x)
-        self._holderTemplate = holderType(x=str(self._compHolder), **kwargs)
-        self._innerHolders = {name: copy.deepcopy(self._holderTemplate) for name in self._compHolder.symbolList}
-        self._dependency = self._compHolder.fields
-
-    def __str__(self):
-        return str(self._holderTemplate)
+cdef class SecurityAverageValueHolder(SecurityStatelessSingleValueHolder):
+    def __init__(self, x):
+        super(SecurityAverageValueHolder, self).__init__(holderType=Average,
+                                                         x=x)
 
 
 cdef class SecurityXAverageValueHolder(SecurityStatelessSingleValueHolder):
