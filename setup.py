@@ -36,6 +36,8 @@ ext_modules = [
     "Analysis/SeriesValues.pyx",
     "Analysis/transformer.pyx",
     "Analysis/CrossSectionValueHolders.pyx",
+    "Analysis/TechnicalAnalysis/StatefulTechnicalAnalysers.pyx",
+    "Analysis/TechnicalAnalysis/StatelessTechnicalAnalysers.pyx",
 ]
 
 def generate_extensions(ext_modules, line_trace=False):

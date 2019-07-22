@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from Analysis.DataProviders import DataProvider
 from Analysis.SecurityValueHolders import SecurityShiftedValueHolder
 from Analysis.SecurityValueHolders import SecurityDeltaValueHolder
 from Analysis.SecurityValueHolders import SecurityIIFValueHolder

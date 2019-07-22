@@ -66,7 +66,7 @@ from api.Analysis import CSZScore
 from api.Analysis import CSFillNA
 from api.Analysis import CSRes
 
-from PyFin.Utilities.Asserts import pyFinAssert
+from Utilities.Asserts import pyFinAssert
 
 
 __all__ = ["transform",
